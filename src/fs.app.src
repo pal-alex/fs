@@ -3,9 +3,7 @@
   {vsn, "5.5.0"},
   {registered, []},
   {applications, [kernel,stdlib]},
-  {mod, { fs_app, []}},
-  {env, [ {backwards_compatible, true} ]},
-  {maintainers,["Maxim Sokhatsky", "Vladimir Kirillov"]},
+  {maintainers,["Maxim Sokhatsky", "Vladimir Kirillov", "Pala"]},
   {licenses, ["ISC"]},
   {links,[{"Github","https://github.com/synrc/fs"}]}
   ]}.

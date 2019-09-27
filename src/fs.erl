@@ -5,6 +5,7 @@
 
 % sample subscriber
 
+
 start_link(Name) -> start_link(Name, path()).
 start_link(Name, Path) ->
     SupName = name(Name, "sup"),
@@ -12,7 +13,9 @@ start_link(Name, Path) ->
     fs_sup:start_link(SupName, Name, FileHandler, Path).
 
 subscribe() -> subscribe(default_fs).
-subscribe(Name) -> gen_event:add_sup_handler(Name, {fs_event_bridge, self()}, [self()]).
+subscribe(Name) -> 
+    io:format("(fs) subscribe Name = ~p~n",[Name]),
+    gen_event:add_sup_handler(Name, {fs_event_bridge, self()}, [self()]).
 
 path() ->
     case application:get_env(fs, path) of
@@ -27,7 +30,10 @@ start_looper(Name) -> spawn(fun() -> subscribe(Name), loop() end).
 
 loop() ->
     receive
-        {_Pid, {fs, file_event}, {Path, Flags}} -> error_logger:info_msg("file_event: ~p ~p", [Path, Flags]);
+        {_Pid, {fs, file_event}, {Path, Flags}} -> 
+            % error_logger:info_msg("file_event: ~p ~p", [Path, Flags]);
+            io_lib:format("file_event: ~p ~p", [Path, Flags]);
+
         _ -> ignore end,
     loop().
 
@@ -40,7 +46,7 @@ mad_file(DepsPath) ->
     case filelib:is_regular(DepsPath) of
     true  -> path() ++ "/" ++ DepsPath;
     false ->
-        case mad_repl:load_file(DepsPath) of
+        case load_file(DepsPath) of
         {error,_} ->
             %% This path has been already checked in find_executable/2
             false;
@@ -62,3 +68,14 @@ priv_file(Cmd) ->
 name(Name, Prefix) ->
     NameList = erlang:atom_to_list(Name),
     list_to_atom(NameList ++ Prefix).
+
+ets_created() ->
+    case ets:info(filesystem) of
+         undefined -> ets:new(filesystem,[set,named_table,{keypos,1},public]);
+         _ -> skip end.
+
+load_file(Name)  ->
+    ets_created(),
+    case ets:lookup(filesystem,Name) of
+        [{Name,Bin}] -> {ok,Bin};
+        _ -> {error,etsfs} end.
